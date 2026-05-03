@@ -12,6 +12,6 @@
 
 =======================================
 
-Documentations:https://github.com/Duyahzz/ProjectHK1/tree/main/Documentations
+Documentations:https://github.com/lehoangthong2412/ProjectHK1/tree/master/Documentations
 
 Thanks you for visit our website!!
