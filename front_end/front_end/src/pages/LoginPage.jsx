@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { Truck } from "lucide-react";
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, errorMessage }) {
   const [username, setUsername] = useState("admin01");
   const [password, setPassword] = useState("123456");
-  const [role, setRole] = useState("ADMIN");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    await onLogin({ username, password });
+    setLoading(false);
+  };
 
   return (
     <div className="login-shell">
@@ -37,29 +43,38 @@ export default function LoginPage({ onLogin }) {
         <div className="login-right">
           <div className="login-form">
             <h2>Login</h2>
-            <p>Choose a role to preview the full UI flow.</p>
+            <p>Nhập username và password để đăng nhập với tài khoản Admin, Agent hoặc Customer.</p>
 
             <div className="mt-20">
-              <label className="label">Username or Email</label>
-              <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <label className="label">Username</label>
+              <input
+                className="input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
             </div>
 
             <div className="mt-16">
               <label className="label">Password</label>
-              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              />
             </div>
 
-            <div className="mt-16">
-              <label className="label">Preview Role</label>
-              <select className="select" value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="ADMIN">ADMIN</option>
-                <option value="AGENT">AGENT</option>
-                <option value="CUSTOMER">CUSTOMER</option>
-              </select>
-            </div>
+            {errorMessage && (
+              <div className="text-red-500 mt-16" style={{ fontSize: 14 }}>
+                {errorMessage}
+              </div>
+            )}
 
             <div className="flex gap-12 mt-24">
-              <button className="btn" onClick={() => onLogin(role)}>Login</button>
+              <button className="btn" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Đang đăng nhập..." : "Login"}
+              </button>
               <button className="btn-outline" type="button">Register</button>
             </div>
           </div>

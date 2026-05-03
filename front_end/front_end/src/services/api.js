@@ -1,11 +1,26 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api";
+let authToken = null;
+
+export function setAuthToken(token) {
+  authToken = token;
+}
+
+export function clearAuthToken() {
+  authToken = null;
+}
 
 async function request(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
@@ -18,6 +33,12 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  login: (username, password) =>
+    request("/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+
   getCustomers: (search = "") =>
     request(`/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
 
