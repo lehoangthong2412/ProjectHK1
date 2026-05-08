@@ -1,0 +1,10 @@
+This merged package contains:
+- a full Laravel backend project in courierxpress-backend/
+- the API models/controllers/routes/docs/frontend_example from courierxpress_backend_laravel overlaid into the Laravel project
+
+Main files merged:
+- app/Models/*
+- app/Http/Controllers/Api/*
+- routes/api.php
+- docs/*
+- frontend_example/*
