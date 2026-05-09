@@ -190,7 +190,7 @@ export default function LoginPage({ onLogin }) {
                 <p>Create a new customer account.</p>
 
                 <div className="mt-16">
-                  <label className="label">Full Name</label>
+                  <label className="label">Full Name <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     value={registerForm.full_name}
@@ -201,7 +201,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
 
                 <div className="mt-16">
-                  <label className="label">Username</label>
+                  <label className="label">Username <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     value={registerForm.username}
@@ -212,7 +212,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
 
                 <div className="mt-16">
-                  <label className="label">Email</label>
+                  <label className="label">Email <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     value={registerForm.email}
@@ -223,7 +223,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
 
                 <div className="mt-16">
-                  <label className="label">Phone</label>
+                  <label className="label">Phone <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     value={registerForm.phone}
@@ -267,7 +267,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
 
                 <div className="mt-16">
-                  <label className="label">Password</label>
+                  <label className="label">Password <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     type="password"
@@ -279,7 +279,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
 
                 <div className="mt-16">
-                  <label className="label">Confirm Password</label>
+                  <label className="label">Confirm Password <span style={{ color: "red" }}>*</span></label>
                   <input
                     className="input"
                     type="password"
@@ -308,6 +308,17 @@ export default function LoginPage({ onLogin }) {
                 <div className="flex gap-12 mt-24">
                   <button className="btn" onClick={handleRegister} disabled={loading}>
                     {loading ? "Creating account..." : "Register"}
+                  </button>
+                  <button 
+                    className="btn-outline" 
+                    type="button" 
+                    onClick={() => {
+                      setMode("login");
+                      setError("");
+                      setSuccess("");
+                    }}
+                  >
+                    Cancel
                   </button>
                 </div>
               </>

@@ -58,7 +58,7 @@ CREATE TABLE `shipments` (
   CONSTRAINT `shipments_ibfk_3` FOREIGN KEY (`shipment_type_id`) REFERENCES `shipment_types` (`shipment_type_id`),
   CONSTRAINT `shipments_ibfk_4` FOREIGN KEY (`origin_branch_id`) REFERENCES `branches` (`branch_id`),
   CONSTRAINT `shipments_ibfk_5` FOREIGN KEY (`assigned_agent_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

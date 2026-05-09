@@ -37,7 +37,7 @@ CREATE TABLE `shipment_status_history` (
   CONSTRAINT `fk_history_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`),
   CONSTRAINT `shipment_status_history_ibfk_1` FOREIGN KEY (`shipment_id`) REFERENCES `shipments` (`shipment_id`),
   CONSTRAINT `shipment_status_history_ibfk_2` FOREIGN KEY (`updated_by_user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

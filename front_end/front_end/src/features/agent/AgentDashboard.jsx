@@ -267,13 +267,21 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
   const [createError, setCreateError] = useState("");
 
   const [formData, setFormData] = useState({
-    sender_customer_id: "",
-    receiver_customer_id: "",
+    sender_name: "",
+    sender_phone: "",
+    sender_address: "",
+    sender_city: "",
+    receiver_name: "",
+    receiver_phone: "",
+    receiver_address: "",
+    receiver_city: "",
     shipment_type_id: "",
     origin_branch_id: authUser?.branch_id ? String(authUser.branch_id) : "",
     assigned_agent_id: authUser?.user_id ? String(authUser.user_id) : "",
     weight: "",
     total_charge: "",
+    parcel_name: "",
+    item_description: "",
     expected_delivery_date: "",
     notes: "",
   });
@@ -289,17 +297,54 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
       ...prev,
       [field]: value,
     }));
+
+    // Smart Search Logic for Phone Numbers
+    if (field === 'sender_phone' || field === 'receiver_phone') {
+      const type = field === 'sender_phone' ? 'sender' : 'receiver';
+      if (value.length >= 3) { // Start searching after 3 characters
+        const customer = customers.find(c => c.phone && c.phone.includes(value));
+        if (customer && customer.phone === value) { // Exact match
+           autoFill(type, customer);
+        }
+      }
+    }
+  };
+
+  const autoFill = (type, customer) => {
+    if (type === 'sender') {
+      setFormData(prev => ({
+        ...prev,
+        sender_name: customer.full_name || prev.sender_name,
+        sender_address: customer.address_line || prev.sender_address,
+        sender_city: customer.city || prev.sender_city,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        receiver_name: customer.full_name || prev.receiver_name,
+        receiver_address: customer.address_line || prev.receiver_address,
+        receiver_city: customer.city || prev.receiver_city,
+      }));
+    }
   };
 
   const resetForm = () => {
     setFormData({
-      sender_customer_id: "",
-      receiver_customer_id: "",
+      sender_name: "",
+      sender_phone: "",
+      sender_address: "",
+      sender_city: "",
+      receiver_name: "",
+      receiver_phone: "",
+      receiver_address: "",
+      receiver_city: "",
       shipment_type_id: "",
       origin_branch_id: authUser?.branch_id ? String(authUser.branch_id) : "",
       assigned_agent_id: authUser?.user_id ? String(authUser.user_id) : "",
       weight: "",
       total_charge: "",
+      parcel_name: "",
+      item_description: "",
       expected_delivery_date: "",
       notes: "",
     });
@@ -316,17 +361,12 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
       setSubmitting(true);
 
       const payload = {
-        sender_customer_id: Number(formData.sender_customer_id),
-        receiver_customer_id: Number(formData.receiver_customer_id),
+        ...formData,
         shipment_type_id: Number(formData.shipment_type_id),
         origin_branch_id: Number(formData.origin_branch_id),
-        assigned_agent_id: formData.assigned_agent_id
-          ? Number(formData.assigned_agent_id)
-          : null,
+        assigned_agent_id: formData.assigned_agent_id ? Number(formData.assigned_agent_id) : null,
         weight: Number(formData.weight),
         total_charge: Number(formData.total_charge),
-        expected_delivery_date: formData.expected_delivery_date,
-        notes: formData.notes,
       };
 
       await api.createShipment(payload);
@@ -339,7 +379,7 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
       }
     } catch (error) {
       console.error(error);
-      setCreateError("Create shipment failed. Please check your input and backend.");
+      setCreateError("Create shipment failed. Please check your data.");
     } finally {
       setSubmitting(false);
     }
@@ -355,41 +395,58 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
       </div>
 
       <form onSubmit={handleCreateShipment} className="form-grid">
+        {/* Sender Section */}
+        <div style={{ gridColumn: "1 / -1", fontWeight: "bold", color: "#2563eb", borderBottom: "1px solid #ddd", paddingBottom: "5px" }}>
+          SENDER INFORMATION (Type phone to search)
+        </div>
         <div className="grid-2">
           <div>
-            <label className="label">Sender</label>
-            <select
-              className="select"
-              value={formData.sender_customer_id}
-              onChange={(e) => handleChange("sender_customer_id", e.target.value)}
-              required
-            >
-              <option value="">Select sender</option>
-              {customers.map((customer) => (
-                <option key={customer.customer_id} value={customer.customer_id}>
-                  {customer.full_name}
-                </option>
-              ))}
-            </select>
+            <label className="label">Sender Phone</label>
+            <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Search by phone..." />
           </div>
-
           <div>
-            <label className="label">Receiver</label>
-            <select
-              className="select"
-              value={formData.receiver_customer_id}
-              onChange={(e) => handleChange("receiver_customer_id", e.target.value)}
-              required
-            >
-              <option value="">Select receiver</option>
-              {customers.map((customer) => (
-                <option key={customer.customer_id} value={customer.customer_id}>
-                  {customer.full_name}
-                </option>
-              ))}
-            </select>
+            <label className="label">Sender Name</label>
+            <input className="input" type="text" value={formData.sender_name} onChange={(e) => handleChange("sender_name", e.target.value)} required />
           </div>
         </div>
+        <div className="grid-2">
+          <div>
+            <label className="label">Sender Address</label>
+            <input className="input" type="text" value={formData.sender_address} onChange={(e) => handleChange("sender_address", e.target.value)} required />
+          </div>
+          <div>
+            <label className="label">Sender City</label>
+            <input className="input" type="text" value={formData.sender_city} onChange={(e) => handleChange("sender_city", e.target.value)} />
+          </div>
+        </div>
+
+        {/* Receiver Section */}
+        <div style={{ gridColumn: "1 / -1", fontWeight: "bold", color: "#2563eb", borderBottom: "1px solid #ddd", paddingBottom: "5px", marginTop: "10px" }}>
+          RECEIVER INFORMATION (Type phone to search)
+        </div>
+        <div className="grid-2">
+          <div>
+            <label className="label">Receiver Phone</label>
+            <input className="input" type="text" value={formData.receiver_phone} onChange={(e) => handleChange("receiver_phone", e.target.value)} required placeholder="Search by phone..." />
+          </div>
+          <div>
+            <label className="label">Receiver Name</label>
+            <input className="input" type="text" value={formData.receiver_name} onChange={(e) => handleChange("receiver_name", e.target.value)} required />
+          </div>
+        </div>
+        <div className="grid-2">
+          <div>
+            <label className="label">Receiver Address</label>
+            <input className="input" type="text" value={formData.receiver_address} onChange={(e) => handleChange("receiver_address", e.target.value)} required />
+          </div>
+          <div>
+            <label className="label">Receiver City</label>
+            <input className="input" type="text" value={formData.receiver_city} onChange={(e) => handleChange("receiver_city", e.target.value)} />
+          </div>
+        </div>
+
+        {/* Shipment Details Section */}
+        <div style={{ gridColumn: "1 / -1", fontWeight: "bold", color: "#2563eb", borderBottom: "1px solid #ddd", paddingBottom: "5px", marginTop: "10px" }}>SHIPMENT DETAILS</div>
 
         <div className="grid-2">
           <div>
@@ -548,7 +605,7 @@ function StatusView({ authUser }) {
       setNote("");
       alert("Status updated successfully");
     } catch (error) {
-      alert("Cannot update shipment status");
+      alert(error.message || "Cannot update shipment status");
     }
   };
 
@@ -795,8 +852,9 @@ export default function AgentDashboard({ onLogout }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadDashboardData = () => {
-    api.getShipments().then(setShipments).catch(console.error);
-    api.getBills().then(setBills).catch(console.error);
+    const params = authUser?.branch_id ? { branch_id: authUser.branch_id } : {};
+    api.getShipments(params).then(setShipments).catch(console.error);
+    api.getBills(params).then(setBills).catch(console.error);
   };
 
   useEffect(() => {

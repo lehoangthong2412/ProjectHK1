@@ -40,7 +40,7 @@ Route::get('/shipment-types', [ShipmentTypeController::class, 'index']);
 Route::get('/shipments', [ShipmentController::class, 'index']);
 Route::get('/shipments/{shipment}', [ShipmentController::class, 'show']);
 Route::post('/shipments', [ShipmentController::class, 'store']);
-Route::patch('/shipments/{shipment}/status', [ShipmentController::class, 'updateStatus']);
+Route::post('/shipments/{shipment}/status', [ShipmentController::class, 'updateStatus']);
 Route::get('/tracking/{tracking}', [ShipmentController::class, 'trackByNumber']);
 
 Route::get('/bills', [BillController::class, 'index']);

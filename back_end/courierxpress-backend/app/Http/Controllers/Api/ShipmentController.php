@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shipment;
+use App\Models\Customer;
 use App\Models\ShipmentStatusHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ShipmentController extends Controller
 {
@@ -41,31 +44,81 @@ class ShipmentController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'sender_customer_id' => 'required|integer|exists:customers,customer_id',
-            'receiver_customer_id' => 'required|integer|exists:customers,customer_id',
+        $request->validate([
+            // Thông tin người gửi
+            'sender_name' => 'required|string|max:100',
+            'sender_phone' => 'required|string|max:20',
+            'sender_address' => 'required|string|max:255',
+            'sender_city' => 'nullable|string|max:100',
+            
+            // Thông tin người nhận
+            'receiver_name' => 'required|string|max:100',
+            'receiver_phone' => 'required|string|max:20',
+            'receiver_address' => 'required|string|max:255',
+            'receiver_city' => 'nullable|string|max:100',
+
+            // Thông tin đơn hàng
             'shipment_type_id' => 'required|integer|exists:shipment_types,shipment_type_id',
             'origin_branch_id' => 'required|integer|exists:branches,branch_id',
             'assigned_agent_id' => 'nullable|integer|exists:users,user_id',
             'weight' => 'required|numeric',
             'total_charge' => 'required|numeric',
+            'parcel_name' => 'nullable|string|max:150',
+            'item_description' => 'nullable|string',
             'current_status' => 'nullable|string|max:50',
-            'booking_date' => 'nullable|date',
-            'expected_delivery_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
-        $data['tracking_number'] = 'TRK' . now()->format('YmdHis');
-        $data['current_status'] = $data['current_status'] ?? 'BOOKED';
-        $data['booking_date'] = $data['booking_date'] ?? now();
+        // 1. Xử lý người gửi (Sender)
+        $sender = Customer::updateOrCreate(
+            ['phone' => $request->sender_phone],
+            [
+                'full_name' => $request->sender_name,
+                'address_line' => $request->sender_address,
+                'city' => $request->sender_city,
+                'customer_code' => Customer::where('phone', $request->sender_phone)->first()->customer_code ?? 'CUS' . time() . 'S',
+                'country' => 'Vietnam',
+            ]
+        );
 
-        $shipment = Shipment::create($data);
+        // 2. Xử lý người nhận (Receiver)
+        $receiver = Customer::updateOrCreate(
+            ['phone' => $request->receiver_phone],
+            [
+                'full_name' => $request->receiver_name,
+                'address_line' => $request->receiver_address,
+                'city' => $request->receiver_city,
+                'customer_code' => Customer::where('phone', $request->receiver_phone)->first()->customer_code ?? 'CUS' . time() . 'R',
+                'country' => 'Vietnam',
+            ]
+        );
 
+        // 3. Tạo đơn hàng
+        $shipmentData = [
+            'tracking_number' => 'TRK' . now()->format('YmdHis'),
+            'sender_customer_id' => $sender->customer_id,
+            'receiver_customer_id' => $receiver->customer_id,
+            'shipment_type_id' => $request->shipment_type_id,
+            'origin_branch_id' => $request->origin_branch_id,
+            'assigned_agent_id' => $request->assigned_agent_id,
+            'weight' => $request->weight,
+            'total_charge' => $request->total_charge,
+            'parcel_name' => $request->parcel_name,
+            'item_description' => $request->item_description,
+            'current_status' => $request->current_status ?? 'BOOKED',
+            'booking_date' => now(),
+            'notes' => $request->notes,
+            'booking_source' => 'AGENT_COUNTER',
+        ];
+
+        $shipment = Shipment::create($shipmentData);
+
+        // 4. Lưu lịch sử trạng thái
         ShipmentStatusHistory::create([
             'shipment_id' => $shipment->shipment_id,
             'status' => $shipment->current_status,
-            'status_note' => 'Shipment created successfully',
-            'updated_by_user_id' => $shipment->assigned_agent_id ?? 1,
+            'status_note' => 'Shipment created via counter',
+            'updated_by_user_id' => $request->assigned_agent_id ?? 1,
             'event_time' => now(),
         ]);
 
@@ -80,25 +133,35 @@ class ShipmentController extends Controller
         $data = $request->validate([
             'status' => 'required|string|max:50',
             'status_note' => 'nullable|string|max:255',
-            'updated_by_user_id' => 'required|integer|exists:users,user_id',
+            'updated_by_user_id' => 'required|integer',
         ]);
 
-        $shipment->current_status = $data['status'];
-        $shipment->save();
+        try {
+            $shipment->current_status = $data['status'];
+            $shipment->save();
 
-        $history = ShipmentStatusHistory::create([
-            'shipment_id' => $shipment->shipment_id,
-            'status' => $data['status'],
-            'status_note' => $data['status_note'] ?? null,
-            'updated_by_user_id' => $data['updated_by_user_id'],
-            'event_time' => now(),
-        ]);
+            $history = DB::table('shipment_status_history')->insert([
+                'shipment_id' => $shipment->shipment_id,
+                'status' => $data['status'],
+                'status_note' => $data['status_note'] ?? null,
+                'updated_by_user_id' => $data['updated_by_user_id'],
+                'event_time' => now(),
+            ]);
 
-        return response()->json([
-            'message' => 'Shipment status updated successfully',
-            'shipment' => $shipment->fresh(['sender', 'receiver', 'shipmentType', 'branch', 'agent', 'bill']),
-            'history' => $history,
-        ]);
+            return response()->json([
+                'message' => 'Shipment status updated successfully',
+                'shipment' => $shipment->fresh(['sender', 'receiver', 'shipmentType', 'branch', 'agent', 'bill']),
+                'history' => DB::table('shipment_status_history')
+                    ->where('shipment_id', $shipment->shipment_id)
+                    ->orderBy('history_id', 'desc')
+                    ->first()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function trackByNumber(string $tracking)

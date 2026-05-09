@@ -59,7 +59,7 @@ export const api = {
 
   updateShipmentStatus: (id, payload) =>
     request(`/shipments/${id}/status`, {
-      method: "PATCH",
+      method: "POST",
       body: JSON.stringify(payload),
     }),
 
