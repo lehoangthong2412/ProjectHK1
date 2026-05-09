@@ -604,6 +604,7 @@ function StatusView({ authUser }) {
       }));
       setNote("");
       alert("Status updated successfully");
+      loadDashboardData(); // Refresh the main shipments list
     } catch (error) {
       alert(error.message || "Cannot update shipment status");
     }
