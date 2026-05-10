@@ -502,6 +502,7 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               className="input"
               type="number"
               step="0.01"
+              min="0.01"
               value={formData.weight}
               onChange={(e) => handleChange("weight", e.target.value)}
               placeholder="Example: 1.5"
@@ -515,6 +516,7 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               className="input"
               type="number"
               step="0.01"
+              min="0"
               value={formData.total_charge}
               onChange={(e) => handleChange("total_charge", e.target.value)}
               placeholder="Example: 50000"
@@ -528,6 +530,7 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
           <input
             className="input"
             type="date"
+            min={new Date().toISOString().split('T')[0]}
             value={formData.expected_delivery_date}
             onChange={(e) => handleChange("expected_delivery_date", e.target.value)}
             required

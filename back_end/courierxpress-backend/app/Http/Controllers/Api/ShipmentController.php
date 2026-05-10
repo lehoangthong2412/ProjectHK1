@@ -61,11 +61,12 @@ class ShipmentController extends Controller
             'shipment_type_id' => 'required|integer|exists:shipment_types,shipment_type_id',
             'origin_branch_id' => 'required|integer|exists:branches,branch_id',
             'assigned_agent_id' => 'nullable|integer|exists:users,user_id',
-            'weight' => 'required|numeric',
-            'total_charge' => 'required|numeric',
+            'weight' => 'required|numeric|min:0.01',
+            'total_charge' => 'required|numeric|min:0',
             'parcel_name' => 'nullable|string|max:150',
             'item_description' => 'nullable|string',
             'current_status' => 'nullable|string|max:50',
+            'expected_delivery_date' => 'required|date|after_or_equal:today',
             'notes' => 'nullable|string',
         ]);
 
