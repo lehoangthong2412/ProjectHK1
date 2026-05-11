@@ -227,6 +227,9 @@ class AuthController extends Controller
             'full_name' => 'required|string|max:100',
             'email' => 'required|email|max:100|unique:users,email,' . $user->user_id . ',user_id',
             'phone' => 'required|string|max:20|unique:users,phone,' . $user->user_id . ',user_id',
+            'address_line' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -242,6 +245,19 @@ class AuthController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
         ]);
+
+        // Nếu là Customer, cập nhật bảng customers
+        $customer = \App\Models\Customer::where('user_id', $user->user_id)->first();
+        if ($customer) {
+            $customer->update([
+                'full_name' => $request->full_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address_line' => $request->address_line,
+                'city' => $request->city,
+                'country' => $request->country,
+            ]);
+        }
 
         return response()->json([
             'success' => true,

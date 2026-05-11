@@ -334,82 +334,242 @@ function HistoryView({ shipments }) {
   );
 }
 
-function CustomerProfilePage({ authUser, customerProfile, historyCount, onBack }) {
+function CustomerProfilePage({ authUser, customerProfile, onUpdateSuccess }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
+    full_name: customerProfile?.full_name || authUser?.full_name || "",
+    email: customerProfile?.email || authUser?.email || "",
+    phone: customerProfile?.phone || authUser?.phone || "",
+    address_line: customerProfile?.address_line || "",
+    city: customerProfile?.city || "",
+    country: customerProfile?.country || "",
+  });
+
+  const [passData, setPassData] = useState({
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const handleUpdateProfile = async () => {
+    setLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await api.updateProfile({
+        user_id: authUser.user_id,
+        ...profileData,
+      });
+      if (res.success) {
+        setMessage("Profile updated successfully!");
+        setIsEditing(false);
+        if (onUpdateSuccess) onUpdateSuccess(res.user);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to update profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passData.new_password !== passData.new_password_confirmation) {
+      setError("New passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await api.changePassword({
+        user_id: authUser.user_id,
+        current_password: passData.current_password,
+        new_password: passData.new_password,
+        new_password_confirmation: passData.new_password_confirmation,
+      });
+      if (res.success) {
+        setMessage("Password changed successfully!");
+        setPassData({ current_password: "", new_password: "", new_password_confirmation: "" });
+      }
+    } catch (err) {
+      setError(err.message || "Failed to change password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="cx-admin-panel">
-      <div className="cx-admin-panel-header cx-admin-profile-header-row">
-        <div>
+    <div className="cx-admin-grid-two">
+      <div className="cx-admin-panel">
+        <div className="cx-admin-panel-header">
           <h3>Customer Profile</h3>
-          <p className="cx-admin-profile-subtitle">Detailed account information</p>
+          <p className="cx-admin-profile-subtitle">Manage your account and address</p>
         </div>
 
-        <button className="btn-outline" onClick={onBack}>
-          Back
-        </button>
-      </div>
+        {message && <div style={{ color: "green", marginBottom: "15px", fontWeight: "bold" }}>{message}</div>}
+        {error && <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold" }}>{error}</div>}
 
-      <div className="cx-admin-profile-hero">
-        <div className="cx-admin-profile-avatar-large">
-          {authUser?.full_name?.charAt(0)?.toUpperCase() || "C"}
-        </div>
+        <div className="form-grid">
+          <div className="cx-admin-profile-hero">
+            <div className="cx-admin-profile-avatar-large">
+              {authUser?.full_name?.charAt(0)?.toUpperCase() || "C"}
+            </div>
+            <div>
+              <div className="cx-admin-profile-name">{authUser?.full_name || "Customer"}</div>
+              <div className="cx-admin-profile-role">CUSTOMER</div>
+            </div>
+          </div>
 
-        <div>
-          <div className="cx-admin-profile-name">{authUser?.full_name || "Customer"}</div>
-          <div className="cx-admin-profile-role">
-            {authUser?.role === "CUSTOMER" ? "Customer" : authUser?.role || "-"}
+          <div className="grid-1" style={{ gap: "12px" }}>
+            <div className="grid-2">
+              <div>
+                <label className="label">Full Name</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.full_name}
+                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Username</label>
+                <input className="input" disabled value={authUser?.username} />
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div>
+                <label className="label">Email</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Phone</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Address</label>
+              <input
+                className="input"
+                disabled={!isEditing}
+                value={profileData.address_line}
+                onChange={(e) => setProfileData({ ...profileData, address_line: e.target.value })}
+              />
+            </div>
+
+            <div className="grid-2">
+              <div>
+                <label className="label">City</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.city}
+                  onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Country</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.country}
+                  onChange={(e) => setProfileData({ ...profileData, country: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 flex gap-12">
+            {!isEditing ? (
+              <button type="button" className="btn" onClick={() => setIsEditing(true)}>
+                Edit Profile
+              </button>
+            ) : (
+              <>
+                <button type="button" className="btn" onClick={handleUpdateProfile} disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setProfileData({
+                      full_name: customerProfile?.full_name || authUser?.full_name || "",
+                      email: customerProfile?.email || authUser?.email || "",
+                      phone: customerProfile?.phone || authUser?.phone || "",
+                      address_line: customerProfile?.address_line || "",
+                      city: customerProfile?.city || "",
+                      country: customerProfile?.country || "",
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="cx-admin-profile-grid">
-        <div className="cx-admin-profile-item">
-          <span>Full Name</span>
-          <strong>{customerProfile?.full_name || authUser?.full_name || "-"}</strong>
+      <div className="cx-admin-panel">
+        <div className="cx-admin-panel-header">
+          <h3>Security</h3>
+          <p className="cx-admin-profile-subtitle">Update your password</p>
         </div>
 
-        <div className="cx-admin-profile-item">
-          <span>Username</span>
-          <strong>{authUser?.username || "-"}</strong>
-        </div>
+        <div className="form-grid">
+          <div className="grid-1" style={{ gap: "15px" }}>
+            <div>
+              <label className="label">Current Password</label>
+              <input
+                type="password"
+                className="input"
+                value={passData.current_password}
+                onChange={(e) => setPassData({ ...passData, current_password: e.target.value })}
+              />
+            </div>
+            <div className="separator" style={{ margin: "5px 0" }} />
+            <div>
+              <label className="label">New Password</label>
+              <input
+                type="password"
+                className="input"
+                value={passData.new_password}
+                onChange={(e) => setPassData({ ...passData, new_password: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">Confirm Password</label>
+              <input
+                type="password"
+                className="input"
+                value={passData.new_password_confirmation}
+                onChange={(e) => setPassData({ ...passData, new_password_confirmation: e.target.value })}
+              />
+            </div>
+          </div>
 
-        <div className="cx-admin-profile-item">
-          <span>Email</span>
-          <strong>{customerProfile?.email || authUser?.email || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>Phone</span>
-          <strong>{customerProfile?.phone || authUser?.phone || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>Address</span>
-          <strong>{customerProfile?.address_line || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>City</span>
-          <strong>{customerProfile?.city || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>Country</span>
-          <strong>{customerProfile?.country || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>Role</span>
-          <strong>{authUser?.role || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>User ID</span>
-          <strong>{authUser?.user_id || "-"}</strong>
-        </div>
-
-        <div className="cx-admin-profile-item">
-          <span>Tracked Shipments</span>
-          <strong>{historyCount}</strong>
+          <div className="mt-16">
+            <button type="button" className="btn" onClick={handleChangePassword} disabled={loading}>
+              {loading ? "Updating..." : "Update Password"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -417,7 +577,7 @@ function CustomerProfilePage({ authUser, customerProfile, historyCount, onBack }
 }
 
 export default function CustomerDashboard({ onLogout }) {
-  const authUser = JSON.parse(localStorage.getItem("cx_auth_user") || "null");
+  const [authUser, setAuthUser] = useState(JSON.parse(localStorage.getItem("cx_auth_user") || "null"));
   const [activeTab, setActiveTab] = useState("dashboard");
   const [trackingNumber, setTrackingNumber] = useState("TRK003");
   const [trackingDetails, setTrackingDetails] = useState(null);
@@ -475,8 +635,15 @@ export default function CustomerDashboard({ onLogout }) {
           <CustomerProfilePage
             authUser={authUser}
             customerProfile={customerProfile}
-            historyCount={historyShipments.length}
-            onBack={() => setActiveTab("dashboard")}
+            onUpdateSuccess={(newUser) => {
+              setAuthUser(newUser);
+              localStorage.setItem("cx_auth_user", JSON.stringify(newUser));
+              // Refresh customer profile to get address/city update
+              api.getCustomers().then((items) => {
+                const found = items.find((item) => item.user_id === newUser?.user_id);
+                setCustomerProfile(found || null);
+              });
+            }}
           />
         )}
       </main>
