@@ -475,7 +475,7 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               required
             >
               <option value="">Select branch</option>
-              {branches.map((branch) => (
+              {branches.filter(branch => branch.status === "ACTIVE").map((branch) => (
                 <option key={branch.branch_id} value={branch.branch_id}>
                   {branch.branch_name}
                 </option>

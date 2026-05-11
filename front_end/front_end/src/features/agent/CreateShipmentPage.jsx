@@ -170,7 +170,7 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
                 <label className="label">Origin Branch</label>
                 <select className="select" value={formData.origin_branch_id} onChange={(e) => handleChange("origin_branch_id", e.target.value)} required>
                   <option value="">Select branch</option>
-                  {branches.map((branch) => (
+                  {branches.filter(branch => branch.status === "ACTIVE").map((branch) => (
                     <option key={branch.branch_id} value={branch.branch_id}>{branch.branch_name}</option>
                   ))}
                 </select>
