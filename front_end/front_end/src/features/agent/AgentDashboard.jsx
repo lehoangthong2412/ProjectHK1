@@ -526,11 +526,11 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
         </div>
 
         <div>
-          <label className="label">Expected Delivery Date</label>
+          <label className="label">Expected Delivery Date & Time</label>
           <input
             className="input"
-            type="date"
-            min={new Date().toISOString().split('T')[0]}
+            type="datetime-local"
+            min={new Date().toISOString().slice(0, 16)}
             value={formData.expected_delivery_date}
             onChange={(e) => handleChange("expected_delivery_date", e.target.value)}
             required
