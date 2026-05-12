@@ -117,19 +117,41 @@ function StatusPill({ value }) {
   return <span className={`cx-status-pill ${className}`}>{status || "-"}</span>;
 }
 
-function DashboardView({ shipments, bills, setActiveTab }) {
-  const bookedCount = shipments.filter((item) => item.current_status === "BOOKED").length;
-  const transitCount = shipments.filter((item) => item.current_status === "IN_TRANSIT").length;
-  const deliveredCount = shipments.filter((item) => item.current_status === "DELIVERED").length;
-  const pendingBills = bills.filter((item) => item.payment_status === "UNPAID").length;
-
+function DashboardView({ stats, setActiveTab, dateRange, setDateRange }) {
   return (
     <>
+      <div className="cx-admin-panel" style={{ marginBottom: "20px", padding: "15px" }}>
+        <div className="flex gap-12" style={{ alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontWeight: "600", color: "#4b5563" }}>📊 Filter by Booking Date:</div>
+          <div className="flex gap-12">
+            <div className="flex gap-12" style={{ alignItems: "center" }}>
+              <span className="text-muted">From:</span>
+              <input
+                type="date"
+                className="input"
+                style={{ width: "auto", padding: "5px 10px" }}
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-12" style={{ alignItems: "center" }}>
+              <span className="text-muted">To:</span>
+              <input
+                type="date"
+                className="input"
+                style={{ width: "auto", padding: "5px 10px" }}
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="cx-admin-stat-grid">
-        <DashboardStat title="Booked" value={bookedCount} tone="pending" />
-        <DashboardStat title="In Transit" value={transitCount} tone="transit" />
-        <DashboardStat title="Delivered" value={deliveredCount} tone="delivered" />
-        <DashboardStat title="Pending Bills" value={pendingBills} tone="cancelled" />
+        <DashboardStat title="Booked" value={stats.booked} tone="pending" />
+        <DashboardStat title="In Transit" value={stats.in_transit} tone="transit" />
+        <DashboardStat title="Delivered" value={stats.delivered} tone="delivered" />
+        <DashboardStat title="Pending Bills" value={stats.unpaid_bills} tone="cancelled" />
       </div>
 
       <div className="cx-admin-grid-two">
@@ -141,18 +163,16 @@ function DashboardView({ shipments, bills, setActiveTab }) {
           <div className="cx-admin-summary-list">
             <div className="cx-admin-summary-row">
               <span>Total Shipments</span>
-              <strong>{shipments.length}</strong>
+              <strong>{stats.total_shipments}</strong>
             </div>
             <div className="cx-admin-summary-row">
               <span>Total Bills</span>
-              <strong>{bills.length}</strong>
+              <strong>{stats.total_bills}</strong>
             </div>
             <div className="cx-admin-summary-row">
               <span>Revenue</span>
               <strong>
-                {formatCurrency(
-                  bills.reduce((sum, item) => sum + Number(item.total_amount || 0), 0)
-                )}
+                {formatCurrency(stats.revenue)}
               </strong>
             </div>
           </div>
@@ -190,20 +210,21 @@ function DashboardView({ shipments, bills, setActiveTab }) {
   );
 }
 
-function BookingsView({ shipments }) {
+function BookingsView({ shipments, onPageChange }) {
   const [query, setQuery] = useState("");
+  const shipmentList = Array.isArray(shipments) ? shipments : (shipments.data || []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return shipments;
+    if (!q) return shipmentList;
 
-    return shipments.filter(
+    return shipmentList.filter(
       (item) =>
         item.tracking_number?.toLowerCase().includes(q) ||
         item.sender?.full_name?.toLowerCase().includes(q) ||
         item.receiver?.full_name?.toLowerCase().includes(q)
     );
-  }, [query, shipments]);
+  }, [query, shipmentList]);
 
   return (
     <div className="cx-admin-panel">
@@ -254,6 +275,29 @@ function BookingsView({ shipments }) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {!Array.isArray(shipments) && shipments.last_page > 1 && (
+        <div className="flex gap-12" style={{ padding: "15px", justifyContent: "center", borderTop: "1px solid #eee" }}>
+          <button
+            className="btn-outline"
+            disabled={shipments.current_page === 1}
+            onClick={() => onPageChange(shipments.current_page - 1)}
+          >
+            Previous
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span>Page <strong>{shipments.current_page}</strong> of {shipments.last_page}</span>
+          </div>
+          <button
+            className="btn-outline"
+            disabled={shipments.current_page === shipments.last_page}
+            onClick={() => onPageChange(shipments.current_page + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -293,10 +337,20 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
   }, []);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      let updatedFormData = { ...prev, [field]: value };
+
+      if (field === 'shipment_type_id' || field === 'weight') {
+        const typeId = field === 'shipment_type_id' ? Number(value) : Number(prev.shipment_type_id);
+        const weight = field === 'weight' ? Number(value) : Number(prev.weight);
+
+        const selectedType = shipmentTypes.find(t => t.shipment_type_id === typeId);
+        if (selectedType && weight > 0) {
+          updatedFormData.total_charge = selectedType.base_rate * weight;
+        }
+      }
+      return updatedFormData;
+    });
 
     // Smart Search Logic for Phone Numbers
     if (field === 'sender_phone' || field === 'receiver_phone') {
@@ -397,12 +451,13 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
       <form onSubmit={handleCreateShipment} className="form-grid">
         {/* Sender Section */}
         <div style={{ gridColumn: "1 / -1", fontWeight: "bold", color: "#2563eb", borderBottom: "1px solid #ddd", paddingBottom: "5px" }}>
-          SENDER INFORMATION (Type phone to search)
+          SENDER INFORMATION (Auto-fill for returning customers)
         </div>
         <div className="grid-2">
           <div>
             <label className="label">Sender Phone</label>
-            <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Search by phone..." />
+            <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Enter phone to auto-fill..." />
+            <small style={{ color: "#666", fontSize: "11px" }}>Tip: System fills details for existing customers.</small>
           </div>
           <div>
             <label className="label">Sender Name</label>
@@ -493,6 +548,8 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               value={formData.assigned_agent_id}
               onChange={(e) => handleChange("assigned_agent_id", e.target.value)}
               placeholder="Example: 2"
+              readOnly
+              style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
             />
           </div>
 
@@ -520,7 +577,33 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               value={formData.total_charge}
               onChange={(e) => handleChange("total_charge", e.target.value)}
               placeholder="Example: 50000"
+              readOnly
+              style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
               required
+            />
+          </div>
+        </div>
+
+        <div className="grid-2">
+          <div>
+            <label className="label">Parcel Name</label>
+            <input
+              className="input"
+              type="text"
+              value={formData.parcel_name}
+              onChange={(e) => handleChange("parcel_name", e.target.value)}
+              placeholder="e.g. Refrigerator, Shoes"
+              required
+            />
+          </div>
+          <div>
+            <label className="label">Item Description</label>
+            <input
+              className="input"
+              type="text"
+              value={formData.item_description}
+              onChange={(e) => handleChange("item_description", e.target.value)}
+              placeholder="Detailed description..."
             />
           </div>
         </div>
@@ -984,19 +1067,39 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
 export default function AgentDashboard({ onLogout }) {
   const [authUser, setAuthUser] = useState(JSON.parse(localStorage.getItem("cx_auth_user") || "null"));
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [shipments, setShipments] = useState([]);
+  const [shipments, setShipments] = useState({ data: [], current_page: 1, last_page: 1 });
+  const [stats, setStats] = useState({
+    booked: 0,
+    in_transit: 0,
+    delivered: 0,
+    unpaid_bills: 0,
+    total_shipments: 0,
+    total_bills: 0,
+    revenue: 0
+  });
   const [bills, setBills] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const loadDashboardData = () => {
-    const params = authUser?.branch_id ? { branch_id: authUser.branch_id } : {};
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
+
+  const loadDashboardData = (page = 1) => {
+    const params = {
+      ...(authUser?.branch_id ? { branch_id: authUser.branch_id } : {}),
+      start_date: dateRange.start,
+      end_date: dateRange.end,
+      page: page
+    };
     api.getShipments(params).then(setShipments).catch(console.error);
     api.getBills(params).then(setBills).catch(console.error);
+    api.getDashboardStats(params).then(setStats).catch(console.error);
   };
 
   useEffect(() => {
     loadDashboardData();
-  }, [refreshKey]);
+  }, [refreshKey, dateRange]);
 
   const handleShipmentCreated = () => {
     setRefreshKey((prev) => prev + 1);
@@ -1014,7 +1117,12 @@ export default function AgentDashboard({ onLogout }) {
         />
 
         {activeTab === "dashboard" && (
-          <DashboardView shipments={shipments} bills={bills} setActiveTab={setActiveTab} />
+          <DashboardView
+            stats={stats}
+            setActiveTab={setActiveTab}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+          />
         )}
 
         {activeTab === "agent-profile" && (
@@ -1027,7 +1135,12 @@ export default function AgentDashboard({ onLogout }) {
           />
         )}
 
-        {activeTab === "bookings" && <BookingsView shipments={shipments} />}
+        {activeTab === "bookings" && (
+          <BookingsView
+            shipments={shipments}
+            onPageChange={(page) => loadDashboardData(page)}
+          />
+        )}
 
         {activeTab === "create-shipment" && (
           <CreateShipmentView

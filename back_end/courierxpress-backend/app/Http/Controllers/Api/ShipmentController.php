@@ -24,6 +24,14 @@ class ShipmentController extends Controller
             $query->where('origin_branch_id', $request->branch_id);
         }
 
+        if ($request->filled('start_date')) {
+            $query->whereDate('booking_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('booking_date', '<=', $request->end_date);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -32,7 +40,7 @@ class ShipmentController extends Controller
         }
 
         return response()->json(
-            $query->orderBy('shipment_id', 'desc')->get()
+            $query->orderBy('shipment_id', 'desc')->paginate(10)
         );
     }
 

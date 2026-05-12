@@ -9,6 +9,8 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
   const [createMessage, setCreateMessage] = useState("");
   const [createError, setCreateError] = useState("");
 
+  const authUser = JSON.parse(localStorage.getItem("cx_auth_user") || "null");
+
   const [formData, setFormData] = useState({
     sender_name: "",
     sender_phone: "",
@@ -19,8 +21,8 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
     receiver_address: "",
     receiver_city: "",
     shipment_type_id: "",
-    origin_branch_id: "",
-    assigned_agent_id: "",
+    origin_branch_id: authUser?.branch_id ? String(authUser.branch_id) : "",
+    assigned_agent_id: authUser?.user_id ? String(authUser.user_id) : "",
     weight: "",
     total_charge: "",
     parcel_name: "",
@@ -35,10 +37,20 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
   }, []);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      let updatedFormData = { ...prev, [field]: value };
+
+      if (field === 'shipment_type_id' || field === 'weight') {
+        const typeId = field === 'shipment_type_id' ? Number(value) : Number(prev.shipment_type_id);
+        const weight = field === 'weight' ? Number(value) : Number(prev.weight);
+
+        const selectedType = shipmentTypes.find(t => t.shipment_type_id === typeId);
+        if (selectedType && weight > 0) {
+          updatedFormData.total_charge = selectedType.base_rate * weight;
+        }
+      }
+      return updatedFormData;
+    });
   };
 
   const resetForm = () => {
@@ -52,8 +64,8 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
       receiver_address: "",
       receiver_city: "",
       shipment_type_id: "",
-      origin_branch_id: "",
-      assigned_agent_id: "",
+      origin_branch_id: authUser?.branch_id ? String(authUser.branch_id) : "",
+      assigned_agent_id: authUser?.user_id ? String(authUser.user_id) : "",
       weight: "",
       total_charge: "",
       parcel_name: "",
@@ -109,7 +121,7 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
         <div className="card-body">
           <form onSubmit={handleCreateShipment} className="form-grid">
             {/* Sender Section */}
-            <div className="section-title" style={{ gridColumn: "1 / -1", fontWeight: "bold", borderBottom: "1px solid #eee", paddingBottom: "5px", marginBottom: "10px" }}>SENDER INFORMATION</div>
+            <div className="section-title" style={{ gridColumn: "1 / -1", fontWeight: "bold", borderBottom: "1px solid #eee", paddingBottom: "5px", marginBottom: "10px" }}>SENDER INFORMATION (Auto-fill for returning customers)</div>
             <div className="grid-2">
               <div>
                 <label className="label">Sender Name</label>
@@ -117,7 +129,8 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
               </div>
               <div>
                 <label className="label">Sender Phone</label>
-                <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Phone Number" />
+                <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Enter phone to auto-fill..." />
+                <small style={{ color: "#666", fontSize: "11px" }}>Tip: Existing customers will be auto-filled.</small>
               </div>
             </div>
             <div className="grid-2">
@@ -188,7 +201,16 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
               </div>
               <div>
                 <label className="label">Total Charge ($)</label>
-                <input className="input" type="number" step="0.01" value={formData.total_charge} onChange={(e) => handleChange("total_charge", e.target.value)} required />
+                <input
+                  className="input"
+                  type="number"
+                  step="0.01"
+                  value={formData.total_charge}
+                  onChange={(e) => handleChange("total_charge", e.target.value)}
+                  readOnly
+                  style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
+                  required
+                />
               </div>
             </div>
 
@@ -198,8 +220,16 @@ export default function CreateShipmentPage({ onShipmentCreated }) {
                 <input className="input" type="datetime-local" min={new Date().toISOString().slice(0, 16)} value={formData.expected_delivery_date} onChange={(e) => handleChange("expected_delivery_date", e.target.value)} required />
               </div>
               <div>
-                <label className="label">Assigned Agent ID</label>
-                <input className="input" type="number" value={formData.assigned_agent_id} onChange={(e) => handleChange("assigned_agent_id", e.target.value)} placeholder="Example: 2" />
+                <label className="label">Agent ID</label>
+                <input
+                  className="input"
+                  type="number"
+                  value={formData.assigned_agent_id}
+                  onChange={(e) => handleChange("assigned_agent_id", e.target.value)}
+                  placeholder="Example: 2"
+                  readOnly
+                  style={{ backgroundColor: "#f3f4f6", cursor: "not-allowed" }}
+                />
               </div>
             </div>
 

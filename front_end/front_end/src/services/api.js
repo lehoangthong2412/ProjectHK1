@@ -60,6 +60,15 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  getDashboardStats: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(
+        ([, value]) => value !== undefined && value !== null && value !== ""
+      )
+    ).toString();
+    return request(`/dashboard${query ? `?${query}` : ""}`);
+  },
+
   getCustomers: (search = "") =>
     request(`/customers${search ? `?search=${encodeURIComponent(search)}` : ""}`),
 
@@ -106,7 +115,15 @@ export const api = {
     return request(`/shipments${query ? `?${query}` : ""}`);
   },
 
-  getBills: () => request("/bills"),
+  getBills: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(
+        ([, value]) => value !== undefined && value !== null && value !== ""
+      )
+    ).toString();
+
+    return request(`/bills${query ? `?${query}` : ""}`);
+  },
 
   trackShipment: (tracking) => request(`/tracking/${tracking}`),
 

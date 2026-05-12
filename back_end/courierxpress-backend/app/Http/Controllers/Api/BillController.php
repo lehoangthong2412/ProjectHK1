@@ -7,12 +7,26 @@ use App\Models\Bill;
 
 class BillController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $query = Bill::with(['shipment.sender', 'shipment.receiver', 'shipment.shipmentType', 'shipment.branch']);
+
+        if ($request->filled('branch_id')) {
+            $query->whereHas('shipment', function ($q) use ($request) {
+                $q->where('origin_branch_id', $request->branch_id);
+            });
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
         return response()->json(
-            Bill::with(['shipment.sender', 'shipment.receiver', 'shipment.shipmentType', 'shipment.branch'])
-                ->orderBy('bill_id', 'desc')
-                ->get()
+            $query->orderBy('bill_id', 'desc')->get()
         );
     }
 
