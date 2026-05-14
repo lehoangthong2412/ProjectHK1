@@ -62,11 +62,18 @@ function AgentMenu({ activeTab, setActiveTab, onLogout }) {
   );
 }
 
-function HeaderBar({ authUser, onOpenProfile }) {
+function HeaderBar({ authUser, onOpenProfile, branchName }) {
   return (
     <div className="cx-admin-header">
       <div>
-        <h1>Agent Dashboard</h1>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
+          <h1>Agent Dashboard</h1>
+          {branchName && (
+            <span className="badge badge-blue" style={{ fontSize: "14px", padding: "6px 12px" }}>
+              {branchName}
+            </span>
+          )}
+        </div>
         <p>Branch shipment booking, status update, billing, and search.</p>
       </div>
 
@@ -1099,12 +1106,10 @@ export default function AgentDashboard({ onLogout }) {
     revenue: 0
   });
   const [bills, setBills] = useState([]);
+  const [branches, setBranches] = useState([]); // Added to store branch list
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  });
+  const currentBranch = branches.find(b => b.branch_id === authUser?.branch_id);
 
   const loadDashboardStats = () => {
     const params = {
@@ -1137,6 +1142,10 @@ export default function AgentDashboard({ onLogout }) {
   };
 
   useEffect(() => {
+    api.getBranches().then(setBranches).catch(console.error); // Load branches to get the name
+  }, []);
+
+  useEffect(() => {
     loadDashboardStats();
     loadShipments();
     loadBills();
@@ -1155,6 +1164,7 @@ export default function AgentDashboard({ onLogout }) {
         <HeaderBar
           authUser={authUser}
           onOpenProfile={() => setActiveTab("agent-profile")}
+          branchName={currentBranch?.branch_name}
         />
 
         {activeTab === "dashboard" && (
