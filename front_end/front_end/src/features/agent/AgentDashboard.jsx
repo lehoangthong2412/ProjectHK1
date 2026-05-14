@@ -461,24 +461,28 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
           SENDER INFORMATION (Auto-fill for returning customers)
         </div>
         <div className="grid-2">
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Sender Phone</label>
-            <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Enter phone to auto-fill..." />
+            <input className="input" type="text" value={formData.sender_phone} onChange={(e) => handleChange("sender_phone", e.target.value)} required placeholder="Enter phone..." maxLength="20" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.sender_phone.length >= 20 ? "red" : "#999" }}>{formData.sender_phone.length}/20</span>
             <small style={{ color: "#666", fontSize: "11px" }}>Tip: System fills details for existing customers.</small>
           </div>
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Sender Name</label>
-            <input className="input" type="text" value={formData.sender_name} onChange={(e) => handleChange("sender_name", e.target.value)} required />
+            <input className="input" type="text" value={formData.sender_name} onChange={(e) => handleChange("sender_name", e.target.value)} required placeholder="Full name..." maxLength="100" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.sender_name.length >= 100 ? "red" : "#999" }}>{formData.sender_name.length}/100</span>
           </div>
         </div>
         <div className="grid-2">
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Sender Address</label>
-            <input className="input" type="text" value={formData.sender_address} onChange={(e) => handleChange("sender_address", e.target.value)} required />
+            <input className="input" type="text" value={formData.sender_address} onChange={(e) => handleChange("sender_address", e.target.value)} required placeholder="Enter address..." maxLength="250" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.sender_address.length >= 250 ? "red" : "#999" }}>{formData.sender_address.length}/250</span>
           </div>
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Sender City</label>
-            <input className="input" type="text" value={formData.sender_city} onChange={(e) => handleChange("sender_city", e.target.value)} />
+            <input className="input" type="text" value={formData.sender_city} onChange={(e) => handleChange("sender_city", e.target.value)} placeholder="City..." maxLength="100" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.sender_city.length >= 100 ? "red" : "#999" }}>{formData.sender_city.length}/100</span>
           </div>
         </div>
 
@@ -487,23 +491,27 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
           RECEIVER INFORMATION (Type phone to search)
         </div>
         <div className="grid-2">
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Receiver Phone</label>
-            <input className="input" type="text" value={formData.receiver_phone} onChange={(e) => handleChange("receiver_phone", e.target.value)} required placeholder="Search by phone..." />
+            <input className="input" type="text" value={formData.receiver_phone} onChange={(e) => handleChange("receiver_phone", e.target.value)} required placeholder="Search phone..." maxLength="20" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.receiver_phone.length >= 20 ? "red" : "#999" }}>{formData.receiver_phone.length}/20</span>
           </div>
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Receiver Name</label>
-            <input className="input" type="text" value={formData.receiver_name} onChange={(e) => handleChange("receiver_name", e.target.value)} required />
+            <input className="input" type="text" value={formData.receiver_name} onChange={(e) => handleChange("receiver_name", e.target.value)} required placeholder="Full name..." maxLength="100" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.receiver_name.length >= 100 ? "red" : "#999" }}>{formData.receiver_name.length}/100</span>
           </div>
         </div>
         <div className="grid-2">
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Receiver Address</label>
-            <input className="input" type="text" value={formData.receiver_address} onChange={(e) => handleChange("receiver_address", e.target.value)} required />
+            <input className="input" type="text" value={formData.receiver_address} onChange={(e) => handleChange("receiver_address", e.target.value)} required placeholder="Address..." maxLength="250" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.receiver_address.length >= 250 ? "red" : "#999" }}>{formData.receiver_address.length}/250</span>
           </div>
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Receiver City</label>
-            <input className="input" type="text" value={formData.receiver_city} onChange={(e) => handleChange("receiver_city", e.target.value)} />
+            <input className="input" type="text" value={formData.receiver_city} onChange={(e) => handleChange("receiver_city", e.target.value)} placeholder="City..." maxLength="100" />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.receiver_city.length >= 100 ? "red" : "#999" }}>{formData.receiver_city.length}/100</span>
           </div>
         </div>
 
@@ -592,18 +600,20 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
         </div>
 
         <div className="grid-2">
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Parcel Name</label>
             <input
               className="input"
               type="text"
               value={formData.parcel_name}
               onChange={(e) => handleChange("parcel_name", e.target.value)}
-              placeholder="e.g. Refrigerator, Shoes"
+              placeholder="e.g. Shoes"
               required
+              maxLength="100"
             />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.parcel_name.length >= 100 ? "red" : "#999" }}>{formData.parcel_name.length}/100</span>
           </div>
-          <div>
+          <div style={{ position: "relative" }}>
             <label className="label">Item Description</label>
             <input
               className="input"
@@ -611,7 +621,9 @@ function CreateShipmentView({ onShipmentCreated, authUser }) {
               value={formData.item_description}
               onChange={(e) => handleChange("item_description", e.target.value)}
               placeholder="Detailed description..."
+              maxLength={250}
             />
+            <span style={{ position: "absolute", right: "12px", top: "38px", fontSize: "10px", color: formData.item_description.length >= 250 ? "red" : "#999" }}>{formData.item_description.length}/250</span>
           </div>
         </div>
 
@@ -719,9 +731,10 @@ function StatusView({ authUser, onStatusUpdated }) {
           <div className="toolbar">
             <input
               className="input"
-              placeholder="Enter tracking number"
+              placeholder="Tracking number..."
               value={tracking}
               onChange={(e) => setTracking(e.target.value)}
+              maxLength={20}
             />
             <button className="btn" onClick={search}>
               {loading ? "Searching..." : "Search"}
@@ -740,9 +753,10 @@ function StatusView({ authUser, onStatusUpdated }) {
 
             <input
               className="input"
-              placeholder="Remark"
+              placeholder="Remark..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              maxLength={250}
             />
           </div>
 
@@ -938,15 +952,15 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
     <div className="cx-admin-profile-container" style={{ maxWidth: "800px", margin: "0 auto" }}>
       {/* Tab Navigation */}
       <div className="tabs" style={{ marginBottom: "24px" }}>
-        <button 
-          className={`tab-btn ${profileTab === 'INFO' ? 'active' : ''}`} 
+        <button
+          className={`tab-btn ${profileTab === 'INFO' ? 'active' : ''}`}
           onClick={() => { setProfileTab('INFO'); setError(""); setMessage(""); }}
         >
           <UserCircle2 size={16} style={{ marginRight: "8px", verticalAlign: "middle" }} />
           Personal Information
         </button>
-        <button 
-          className={`tab-btn ${profileTab === 'PASSWORD' ? 'active' : ''}`} 
+        <button
+          className={`tab-btn ${profileTab === 'PASSWORD' ? 'active' : ''}`}
           onClick={() => { setProfileTab('PASSWORD'); setError(""); setMessage(""); }}
         >
           <ShieldCheck size={16} style={{ marginRight: "8px", verticalAlign: "middle" }} />
@@ -983,6 +997,8 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
                   disabled={!isEditing}
                   value={profileData.full_name}
                   onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                  placeholder="Full Name..."
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -992,6 +1008,8 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
                   disabled={!isEditing}
                   value={profileData.email}
                   onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                  placeholder="Email..."
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -1001,6 +1019,8 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
                   disabled={!isEditing}
                   value={profileData.phone}
                   onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  placeholder="Phone..."
+                  maxLength={20}
                 />
               </div>
               <div className="cx-admin-profile-item" style={{ border: "none", padding: 0 }}>
