@@ -860,6 +860,7 @@ function BillsView({ bills }) {
 }
 
 function AgentProfilePage({ authUser, onUpdateSuccess }) {
+  const [profileTab, setProfileTab] = useState("INFO"); // 'INFO' or 'PASSWORD'
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     full_name: authUser?.full_name || "",
@@ -927,139 +928,159 @@ function AgentProfilePage({ authUser, onUpdateSuccess }) {
   };
 
   return (
-    <div className="cx-admin-grid-two">
-      <div className="cx-admin-panel">
-        <div className="cx-admin-panel-header">
-          <h3>Agent Profile</h3>
-          <p className="cx-admin-profile-subtitle">Manage your personal information</p>
+    <div className="cx-admin-profile-container" style={{ maxWidth: "800px", margin: "0 auto" }}>
+      {/* Tab Navigation */}
+      <div className="tabs" style={{ marginBottom: "24px" }}>
+        <button 
+          className={`tab-btn ${profileTab === 'INFO' ? 'active' : ''}`} 
+          onClick={() => { setProfileTab('INFO'); setError(""); setMessage(""); }}
+        >
+          <UserCircle2 size={16} style={{ marginRight: "8px", verticalAlign: "middle" }} />
+          Personal Information
+        </button>
+        <button 
+          className={`tab-btn ${profileTab === 'PASSWORD' ? 'active' : ''}`} 
+          onClick={() => { setProfileTab('PASSWORD'); setError(""); setMessage(""); }}
+        >
+          <ShieldCheck size={16} style={{ marginRight: "8px", verticalAlign: "middle" }} />
+          Security & Password
+        </button>
+      </div>
+
+      {message && <div style={{ color: "green", marginBottom: "15px", fontWeight: "bold", padding: "10px", background: "#dcfce7", borderRadius: "12px" }}>{message}</div>}
+      {error && <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold", padding: "10px", background: "#fee2e2", borderRadius: "12px" }}>{error}</div>}
+
+      {profileTab === 'INFO' ? (
+        <div className="cx-admin-panel animate-fade-in">
+          <div className="cx-admin-panel-header">
+            <h3>Agent Profile</h3>
+            <p className="cx-admin-profile-subtitle">Manage your personal information</p>
+          </div>
+
+          <div className="form-grid">
+            <div className="cx-admin-profile-hero">
+              <div className="cx-admin-profile-avatar-large">
+                {authUser?.full_name?.charAt(0)?.toUpperCase() || "A"}
+              </div>
+              <div>
+                <div className="cx-admin-profile-name">{authUser?.full_name || "Agent"}</div>
+                <div className="cx-admin-profile-role">AGENT</div>
+              </div>
+            </div>
+
+            <div className="grid-1" style={{ gap: "15px" }}>
+              <div>
+                <label className="label">Full Name</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.full_name}
+                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Email Address</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Phone Number</label>
+                <input
+                  className="input"
+                  disabled={!isEditing}
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                />
+              </div>
+              <div className="cx-admin-profile-item" style={{ border: "none", padding: 0 }}>
+                <span>Username: </span>
+                <strong>{authUser?.username}</strong>
+              </div>
+            </div>
+
+            <div className="flex gap-12 mt-16">
+              {!isEditing ? (
+                <button type="button" className="btn" onClick={() => setIsEditing(true)}>
+                  Edit Profile
+                </button>
+              ) : (
+                <>
+                  <button type="button" className="btn" onClick={handleUpdateProfile} disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setProfileData({
+                        full_name: authUser.full_name,
+                        email: authUser.email,
+                        phone: authUser.phone,
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-
-        {message && <div style={{ color: "green", marginBottom: "15px", fontWeight: "bold" }}>{message}</div>}
-        {error && <div style={{ color: "red", marginBottom: "15px", fontWeight: "bold" }}>{error}</div>}
-
-        <div className="form-grid">
-          <div className="cx-admin-profile-hero">
-            <div className="cx-admin-profile-avatar-large">
-              {authUser?.full_name?.charAt(0)?.toUpperCase() || "A"}
-            </div>
-            <div>
-              <div className="cx-admin-profile-name">{authUser?.full_name || "Agent"}</div>
-              <div className="cx-admin-profile-role">AGENT</div>
-            </div>
+      ) : (
+        <div className="cx-admin-panel animate-fade-in">
+          <div className="cx-admin-panel-header">
+            <h3>Change Password</h3>
+            <p className="cx-admin-profile-subtitle">Update your account security</p>
           </div>
 
-          <div className="grid-1" style={{ gap: "15px" }}>
-            <div>
-              <label className="label">Full Name</label>
-              <input
-                className="input"
-                disabled={!isEditing}
-                value={profileData.full_name}
-                onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-              />
+          <div className="form-grid">
+            <div className="grid-1" style={{ gap: "15px" }}>
+              <div>
+                <label className="label">Current Password</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={passData.current_password}
+                  onChange={(e) => setPassData({ ...passData, current_password: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="separator" style={{ margin: "5px 0" }} />
+              <div>
+                <label className="label">New Password</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={passData.new_password}
+                  onChange={(e) => setPassData({ ...passData, new_password: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Confirm New Password</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={passData.new_password_confirmation}
+                  onChange={(e) => setPassData({ ...passData, new_password_confirmation: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="label">Email Address</label>
-              <input
-                className="input"
-                disabled={!isEditing}
-                value={profileData.email}
-                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Phone Number</label>
-              <input
-                className="input"
-                disabled={!isEditing}
-                value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-              />
-            </div>
-            <div className="cx-admin-profile-item" style={{ border: "none", padding: 0 }}>
-              <span>Username: </span>
-              <strong>{authUser?.username}</strong>
-            </div>
-          </div>
 
-          <div className="flex gap-12 mt-16">
-            {!isEditing ? (
-              <button type="button" className="btn" onClick={() => setIsEditing(true)}>
-                Edit Profile
+            <div className="mt-16">
+              <button type="button" className="btn" onClick={handleChangePassword} disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
               </button>
-            ) : (
-              <>
-                <button type="button" className="btn" onClick={handleUpdateProfile} disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-outline"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setProfileData({
-                      full_name: authUser.full_name,
-                      email: authUser.email,
-                      phone: authUser.phone,
-                    });
-                  }}
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="cx-admin-panel">
-        <div className="cx-admin-panel-header">
-          <h3>Change Password</h3>
-          <p className="cx-admin-profile-subtitle">Update your account security</p>
-        </div>
-
-        <div className="form-grid">
-          <div className="grid-1" style={{ gap: "15px" }}>
-            <div>
-              <label className="label">Current Password</label>
-              <input
-                type="password"
-                className="input"
-                value={passData.current_password}
-                onChange={(e) => setPassData({ ...passData, current_password: e.target.value })}
-                required
-              />
-            </div>
-            <div className="separator" style={{ margin: "5px 0" }} />
-            <div>
-              <label className="label">New Password</label>
-              <input
-                type="password"
-                className="input"
-                value={passData.new_password}
-                onChange={(e) => setPassData({ ...passData, new_password: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="label">Confirm New Password</label>
-              <input
-                type="password"
-                className="input"
-                value={passData.new_password_confirmation}
-                onChange={(e) => setPassData({ ...passData, new_password_confirmation: e.target.value })}
-                required
-              />
             </div>
           </div>
-
-          <div className="mt-16">
-            <button type="button" className="btn" onClick={handleChangePassword} disabled={loading}>
-              {loading ? "Updating..." : "Update Password"}
-            </button>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
